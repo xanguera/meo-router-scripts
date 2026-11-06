@@ -188,3 +188,11 @@ You need to install `expect` — see the setup instructions for your OS above. T
 **Wi-Fi was turned off and now I can't connect**
 
 Connect your computer to the router with an ethernet cable, then run `./router-wifi-toggle.sh 1` to turn it back on.
+
+### Python version (Windows/Linux/macOS)
+
+A Python implementation of the original MEO Router Scripts is also available, supporting Windows, Linux and macOS.
+
+See **[Python (Windows/Linux/macOS)](python/README.md)** for installation instructions, usage examples and supported features.
+
+**Credits:** The original Bash scripts were developed by [xanguera](https://github.com/xanguera/meo-router-scripts). The Python implementation is based on their work, with adaptations for cross-platform compatibility.
