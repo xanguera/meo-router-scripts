@@ -1,12 +1,17 @@
-# Atribuição e origem
+# Attribution and origin
 
-O projeto Python nesta pasta foi desenvolvido a partir do comportamento da API HTTP e dos comandos Telnet descritos no projeto original:
+The Python tools in this folder were contributed by [joaoruimatos](https://github.com/joaoruimatos). They are based on the HTTP API and Telnet commands used by the original Bash scripts in this repository, by [Xavier Anguera](https://github.com/xanguera):
 
-- **Autor e projeto original:** [xanguera/meo-router-scripts](https://github.com/xanguera/meo-router-scripts)
-- Scripts Bash originais: `router-wifi-toggle.sh`, `router-wps-toggle.sh`, `router-mesh-toggle.sh`, `router-bridge-mode.sh`.
-- A nova versão em Python mantém os mesmos fluxos funcionais, mas não inclui os ficheiros Bash originais.
-- Melhorias: compatibilidade com Windows sem Bash/expect, IP e utilizador configuráveis por perguntas ou opções, password oculta, `--apply` para ações e testes locais sem router real.
+- `router-wifi-toggle.sh`, `router-wps-toggle.sh`, `router-mesh-toggle.sh`, `router-bridge-mode.sh`.
 
-**Nota sobre licenciamento:** o repositório original não apresentava um ficheiro ou declaração de licença no momento da consulta (6 de novembro de 2026). O código-fonte publicamente visível não deve ser presumido livre para redistribuição irrestrita. Para contribuir, prefere um fork e um pull request no GitHub e pede ao autor que esclareça a licença. Este documento de créditos não concede licenças sobre trabalho de terceiros.
+The Python version follows the same steps as those scripts and adds:
 
-**Nota de teste:** o pedido de desativação de Wi-Fi foi confirmado num GR241AG com firmware `3RGW040E00r020`. Outros comandos e firmwares podem comportar-se de modo diferente.
+- Windows support without Bash or `expect`.
+- Router IP and username set by a question or a flag.
+- A hidden password prompt.
+- A dry run unless `--apply` is given.
+- Local tests that need no real router.
+
+**Test note:** turning Wi-Fi off was confirmed on a GR241AG with firmware `3RGW040E00r020`. Other commands and firmware versions may behave differently.
+
+The whole repository, including this folder, is released under the [MIT license](../LICENSE).

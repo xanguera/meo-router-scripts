@@ -1,6 +1,10 @@
 # MEO Router Scripts
 
+*Também disponível em [português](README_pt.md).*
+
 A collection of scripts to control your MEO FiberGateway router (model GR241AG) from the command line. Useful for automating things the web interface makes difficult or impossible.
+
+> **Python version for Windows, Linux and macOS:** the same features are also available as Python scripts that need no Bash, `curl` or `expect`. See **[python/README.md](python/README.md)**. Contributed by [joaoruimatos](https://github.com/joaoruimatos).
 
 ---
 
@@ -73,7 +77,7 @@ sudo dnf install curl expect
 
 #### Windows
 
-The scripts are written for Bash, which does not run natively on Windows. You have two options:
+The scripts are written for Bash, which does not run natively on Windows. The simplest option is the [Python version](python/README.md), which runs natively on Windows. To use the Bash scripts, you have two options:
 
 **Option A — Windows Subsystem for Linux (WSL)** — recommended
 
@@ -189,10 +193,8 @@ You need to install `expect` — see the setup instructions for your OS above. T
 
 Connect your computer to the router with an ethernet cable, then run `./router-wifi-toggle.sh 1` to turn it back on.
 
-### Python version (Windows/Linux/macOS)
+---
 
-A Python implementation of the original MEO Router Scripts is also available, supporting Windows, Linux and macOS.
+## License
 
-See **[Python (Windows/Linux/macOS)](python/README.md)** for installation instructions, usage examples and supported features.
-
-**Credits:** The original Bash scripts were developed by [xanguera](https://github.com/xanguera/meo-router-scripts). The Python implementation is based on their work, with adaptations for cross-platform compatibility.
+These scripts are released under the [MIT license](LICENSE).
