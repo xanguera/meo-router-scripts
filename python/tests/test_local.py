@@ -13,11 +13,29 @@ import meo_gr241ag as app
 
 class Handler(BaseHTTPRequestHandler):
     submitted = []
+    redirect_followed = []
 
     def log_message(self, *_):
         pass
 
     def do_GET(self):
+        if self.headers.get("Authorization") == "Basic " + base64.b64encode(b"redirect:secret").decode():
+            if self.path == "/index.html":
+                self.send_response(302)
+                self.send_header("Location", "/landing")
+                self.end_headers()
+            else:
+                Handler.redirect_followed.append(self.path)
+                self.send_response(200)
+                self.send_header("Set-Cookie", "SESSIONID=testing-session; Path=/")
+                self.end_headers()
+            return
+        if self.headers.get("Authorization") == "Basic " + base64.b64encode(b"cookie302:secret").decode():
+            self.send_response(302)
+            self.send_header("Location", "/landing")
+            self.send_header("Set-Cookie", "SESSIONID=testing-session; Path=/")
+            self.end_headers()
+            return
         expected = "Basic " + base64.b64encode(b"meo:secret").decode()
         if self.path != "/index.html" or self.headers.get("Authorization") != expected:
             self.send_error(401)
@@ -54,26 +72,12 @@ class ScriptsTest(unittest.TestCase):
 
     def setUp(self):
         Handler.submitted = []
+        Handler.redirect_followed = []
 
     def test_http_wifi_mesh_wps(self):
-        # Inject local mock port by replacing the login URL only for tests.
-        real_login = app.http_login
         port = self.server.server_port
-
-        def mock_login(host, username, password):
-            import http.cookiejar, urllib.request
-            jar = http.cookiejar.CookieJar()
-            opener = urllib.request.build_opener(urllib.request.ProxyHandler({}), urllib.request.HTTPCookieProcessor(jar))
-            root = f"http://127.0.0.1:{port}"
-            authorization = base64.b64encode(f"{username}:{password}".encode()).decode()
-            request = urllib.request.Request(root + "/index.html", headers={"Authorization": "Basic " + authorization})
-            app.http_request(opener, request)
-            self.assertTrue(any(cookie.name == "SESSIONID" for cookie in jar))
-            return opener, root
-
-        with patch.object(app, "http_login", side_effect=mock_login):
-            for feature, action in [("wifi", "off"), ("mesh", "off"), ("wps", "off")]:
-                self.assertEqual(app.http_modify("127.0.0.1", "meo", "secret", feature, action), 0)
+        for feature, action in [("wifi", "off"), ("mesh", "off"), ("wps", "off")]:
+            self.assertEqual(app.http_modify("127.0.0.1", "meo", "secret", feature, action, port=port), 0)
         self.assertEqual(len(Handler.submitted), 3)
         self.assertEqual(Handler.submitted[0][0], "/locallmngt.cmd?request=/generic-wifi")
         self.assertIn('"enableWifi":"0"', Handler.submitted[0][1])
@@ -82,6 +86,34 @@ class ScriptsTest(unittest.TestCase):
         self.assertIn('"wps":false', Handler.submitted[2][1])
         self.assertIn('"wpsOptions":3', Handler.submitted[2][1])
         self.assertIn("charset=UTF-8", Handler.submitted[0][2])
+
+    def test_wrong_password_fails_login(self):
+        with self.assertRaises(app.RouterError):
+            app.http_modify("127.0.0.1", "meo", "wrong", "wifi", "off", port=self.server.server_port)
+        self.assertEqual(Handler.submitted, [])
+
+    def test_login_refuses_redirect(self):
+        # The fake gateway redirects this user to a page that would accept the login.
+        with self.assertRaises(app.RouterError):
+            app.http_login("127.0.0.1", "redirect", "secret", port=self.server.server_port)
+        self.assertEqual(Handler.redirect_followed, [])
+
+    def test_login_accepts_cookie_on_redirect(self):
+        # Like the Bash scripts (curl without -L): the cookie counts, the redirect is not followed.
+        app.http_login("127.0.0.1", "cookie302", "secret", port=self.server.server_port)
+        self.assertEqual(Handler.redirect_followed, [])
+
+    def test_bridge_uses_same_commands_as_bash_script(self):
+        from unittest.mock import AsyncMock
+        with patch("getpass.getpass", return_value="secret"), \
+             patch.object(app, "telnet_commands", new_callable=AsyncMock) as telnet:
+            self.assertEqual(app.main(["bridge", "off", "--apply", "--host", "192.168.1.254", "--user", "meo"]), 0)
+            self.assertEqual(telnet.call_args.args[-1],
+                             ["lan/bridge-mode/config --enable=disable", "lan/bridge-mode/show"])
+
+    def test_run_turns_router_error_into_exit_code(self):
+        with patch.object(app, "main", side_effect=app.RouterError("boom")):
+            self.assertEqual(app.run([]), 2)
 
     def test_dry_run_has_no_connection(self):
         with patch.object(app, "http_login") as login, patch.object(app, "telnet_commands") as telnet:
@@ -128,9 +160,9 @@ class ScriptsTest(unittest.TestCase):
 
     def test_wifi_telnets_use_known_index(self):
         from unittest.mock import AsyncMock
-        with patch("builtins.input", side_effect=["", ""]), patch("getpass.getpass", return_value="secret"), patch.object(app, "telnet_commands", new_callable=AsyncMock) as run:
+        with patch("builtins.input", side_effect=["", ""]), patch("getpass.getpass", return_value="secret"), patch.object(app, "telnet_commands", new_callable=AsyncMock) as telnet:
             self.assertEqual(app.main(["wifi", "status"]), 0)
-            commands = run.call_args.args[-1]
+            commands = telnet.call_args.args[-1]
             self.assertEqual(commands, ["/wireless/basic/show --wifi-index=0", "/wireless/basic/show --wifi-index=1"])
 
 
